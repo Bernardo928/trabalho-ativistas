@@ -4,7 +4,7 @@ export type Word = {text: string; start: number; end: number};
 export const WORDS = words as Word[];
 export const FPS = 30;
 export const CREDITS_GAP = 1.4;
-export const CREDITS_SECONDS = 5.5;
+export const CREDITS_SECONDS = 8;
 
 export const creditsStart = () => WORDS[WORDS.length - 1].end + CREDITS_GAP;
 export const totalSeconds = () => creditsStart() + CREDITS_SECONDS;
