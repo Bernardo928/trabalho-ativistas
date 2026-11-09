@@ -1,7 +1,8 @@
 import React from 'react';
 import {interpolate, random} from 'remotion';
 import {Scene, wordTime} from './timeline';
-import {Turtle} from './Turtle';
+import {Turtle, moodAt} from './Turtle';
+import {Dino, Fossil, Meteor, X0, X1, X_EXT} from './mockups/LinhaDoTempo';
 import {C, FONT_TITLE, FONT_UI, Fill, Tag, Underwater, fadeIn, usePop, useSeconds} from './ui';
 
 type P = {s: Scene};
@@ -116,7 +117,12 @@ export const Hook: React.FC<P> = ({s}) => {
   return (
     <SeaScene>
       <Trail x={tx + 40} y={ty + 150} />
-      <Turtle width={560} flap={Math.sin(t * 5)} style={{position: 'absolute', left: tx, top: ty, transform: `rotate(${Math.sin(t * 2) * 3}deg)`}} />
+      <Turtle
+        width={560}
+        flap={Math.sin(t * 5)}
+        mood={moodAt(t, [[0, 'feliz'], [at(s, 'descobrir'), 'confusa'], [at(s, 'impossivel'), 'assustada']])}
+        style={{position: 'absolute', left: tx, top: ty, transform: `rotate(${Math.sin(t * 2) * 3}deg)`}}
+      />
       <div style={{position: 'absolute', top: 230, width: '100%', textAlign: 'center', transform: `scale(${pop})`}}>
         <Tag bg={C.ink} size={40}>
           1 dia · 24 horas
@@ -353,8 +359,9 @@ export const Mar: React.FC<P> = ({s}) => {
   return (
     <Underwater>
       <Turtle
-        width={380}
+        width={420}
         flap={Math.sin(t * 6)}
+        mood={moodAt(t, [[0, 'determinada'], [at(s, 'parabens'), 'orgulhosa'], [at(s, 'mil'), 'confusa'], [at(s, 'so'), 'assustada']])}
         style={{position: 'absolute', top: 1010 + Math.sin(t * 2) * 10, left: interpolate(t, [0, 2], [-400, 340], clamp)}}
       />
       <div style={{position: 'absolute', top: 300, left: 90, width: 900, opacity: grid}}>
@@ -445,7 +452,8 @@ export const Plastico: React.FC<P> = ({s}) => {
       </div>
       <Turtle
         width={460}
-        sad={reveal > 0.5}
+        mood={moodAt(t, [[0, 'feliz'], [at(s, 'fome'), 'determinada'], [bite, 'mastigando'], [at(s, 'nao'), 'chocada'], [at(s, 'sacola'), 'triste']])}
+        look={0.7}
         flap={Math.sin(t * 5)}
         style={{position: 'absolute', left: 60 + lunge * 220, top: 640 - lunge * 60}}
       />
@@ -481,13 +489,13 @@ export const Rede: React.FC<P> = ({s}) => {
       </div>
       <Turtle
         width={420}
-        sad={t > stuck && t < escape}
+        mood={moodAt(t, [[0, 'determinada'], [at(s, 'sim'), 'feliz'], [at(s, 'rede'), 'assustada'], [escape, 'aliviada']])}
         flap={Math.sin(t * (t > stuck && t < escape ? 16 : 6))}
         style={{
           position: 'absolute',
-          left: 330 + shake + free * 700,
-          top: rise - free * 380,
-          transform: `rotate(${-free * 25}deg)`,
+          left: 330 + shake + free * 260,
+          top: rise - free * 330,
+          transform: `rotate(${-free * 15}deg)`,
         }}
       />
       <svg width="1080" height="700" style={{position: 'absolute', top: 560, opacity: net * (1 - free * 0.4)}}>
@@ -508,40 +516,150 @@ export const Rede: React.FC<P> = ({s}) => {
 };
 
 /* ---------- 7. Linha do tempo ---------- */
+// Cada barra é uma pista: o personagem anda na ponta e a barra cresce atrás dele.
+const LANE_DINO = 380;
+const LANE_TURTLE = 720;
+
+const Track: React.FC<{top: number; label: string; color: string; tip: number; show: number}> = ({top, label, color, tip, show}) => (
+  <div style={{position: 'absolute', top, left: 0, width: 1080, height: 300, opacity: show}}>
+    <div style={{position: 'absolute', left: X0, top: 0, fontFamily: FONT_UI, fontWeight: 800, fontSize: 38, color: '#e2ecff'}}>{label}</div>
+    <div style={{position: 'absolute', left: X0, top: 210, width: X1 - X0, height: 30, borderRadius: 15, background: 'rgba(255,255,255,.1)'}} />
+    <div style={{position: 'absolute', left: X0, top: 210, width: Math.max(30, tip - X0), height: 30, borderRadius: 15, background: color}} />
+  </div>
+);
+
 export const Dinos: React.FC<P> = ({s}) => {
   const t = useSeconds();
-  const turtleBar = interpolate(t, [at(s, 'sua'), at(s, 'anos')], [0, 1], clamp);
-  const dinoBar = interpolate(t, [at(s, 'sobreviveu'), at(s, 'dinossauros') + 0.6], [0, 1], clamp);
-  const items = usePop(at(s, 'coisas'));
-  const row = (label: string, color: string, w: number, p: number, note: string) => (
-    <div style={{marginBottom: 48}}>
-      <div style={{fontFamily: FONT_UI, fontWeight: 800, fontSize: 38, color: '#cfe3ff', marginBottom: 14}}>{label}</div>
-      <div style={{position: 'relative', height: 70, background: 'rgba(255,255,255,.08)', borderRadius: 16}}>
-        <div style={{width: w * p, height: 70, background: color, borderRadius: 16}} />
-        <div style={{position: 'absolute', left: Math.min(w * p, 860) - 6, top: 82, fontFamily: FONT_UI, fontWeight: 800, fontSize: 34, color, opacity: p > 0.95 ? 1 : 0, transform: 'translateX(-100%)', whiteSpace: 'nowrap'}}>
-          {note}
-        </div>
-      </div>
-    </div>
-  );
+  const tSua = at(s, 'sua');
+  const tDino = at(s, 'dinossauros');
+  const tImpact = tDino + 0.3;
+  const tAnos = at(s, 'anos');
+  const tPerigo = at(s, 'perigo');
+  const tCoisas = at(s, 'coisas');
+  const show = fadeIn(t, 0, 0.5);
+
+  const dinoTip = interpolate(t, [tSua - 0.8, tImpact], [X0 + 175, X_EXT], clamp);
+  const turtleTip = interpolate(t, [tSua - 0.8, tAnos], [X0 + 200, X1], clamp);
+  const dinoWalking = t < tImpact;
+  const turtleWalking = t < tAnos;
+  const meteor = interpolate(t, [tDino - 0.35, tImpact], [0, 1], clamp);
+  const fossil = fadeIn(t, tImpact, 0.25);
+  const flash = t < tImpact ? 0 : interpolate(t, [tImpact, tImpact + 0.5], [1, 0], clamp);
+  const extinct = usePop(tImpact + 0.1, 9);
+  const stillHere = usePop(tAnos, 9);
+  const items = usePop(tCoisas);
+  const mood = moodAt(t, [
+    [0, 'determinada'],
+    [tImpact - 0.1, 'chocada'],
+    [tImpact + 0.9, 'determinada'],
+    [tAnos, 'orgulhosa'],
+    [tPerigo, 'assustada'],
+    [tCoisas, 'triste'],
+  ]);
+  const step = (on: boolean, speed: number) => (on ? Math.abs(Math.sin(t * speed)) * -8 : 0);
+
   return (
-    <Fill style={{background: '#0f1726'}}>
-      <div style={{position: 'absolute', top: 330, left: 90, width: 900}}>
-        <div style={{textAlign: 'center', marginBottom: 50}}>
-          <Tag bg="#1f2a3d" color="#7ee2a8" size={36} style={{border: '3px solid #7ee2a8', boxShadow: 'none'}}>
-            Linha do tempo
-          </Tag>
-        </div>
-        {row('Tartarugas marinhas', C.green, 900, turtleBar, '+100 milhões de anos · ainda aqui')}
-        {row('Dinossauros', '#f59e0b', 470, dinoBar, 'extintos')}
-        <div style={{display: 'flex', justifyContent: 'space-between', fontFamily: FONT_UI, fontWeight: 600, fontSize: 28, color: '#8aa0bf', marginTop: 10}}>
-          <span>passado</span>
-          <span>hoje</span>
-        </div>
+    <Fill style={{background: 'linear-gradient(#141e36, #1d2b4a 55%, #241f45)'}}>
+      {new Array(30).fill(0).map((_, i) => (
+        <div key={i} style={{position: 'absolute', left: (i * 197) % 1080, top: (i * 131) % 1800, width: 4, height: 4, borderRadius: '50%', background: '#fff', opacity: 0.25 + 0.2 * Math.sin(t * 2 + i)}} />
+      ))}
+      <div style={{position: 'absolute', top: 270, width: '100%', textAlign: 'center', opacity: show}}>
+        <Tag bg="#1f2a3d" color="#7ee2a8" size={36} style={{border: '3px solid #7ee2a8', boxShadow: 'none'}}>
+          Linha do tempo
+        </Tag>
       </div>
-      <div style={{position: 'absolute', top: 960, width: '100%', display: 'flex', justifyContent: 'center', gap: 26, transform: `scale(${items})`}}>
+
+      <div style={{position: 'absolute', left: X_EXT - 2, top: 440, height: 210, borderLeft: '4px dashed rgba(251,146,60,.6)', opacity: fossil}} />
+      <div style={{position: 'absolute', left: X_EXT - 2, top: 790, height: 280, borderLeft: '4px dashed rgba(251,146,60,.6)', opacity: fossil}} />
+
+      {/* Pista dos dinossauros */}
+      <Track top={LANE_DINO} label="Dinossauros" color="#f59e0b" tip={dinoTip} show={show} />
+      <div style={{position: 'absolute', left: X0 - 10, top: LANE_DINO + 100, opacity: 0.3 * Math.min(1, (dinoTip - X0 - 175) / 120)}}>
+        <Dino width={150} />
+      </div>
+      <div style={{position: 'absolute', left: dinoTip - 200, top: LANE_DINO + 64 + step(dinoWalking, 9), opacity: show * (1 - fossil)}}>
+        <Dino width={200} />
+      </div>
+      <div style={{position: 'absolute', left: X_EXT - 225, top: LANE_DINO + 100, opacity: fossil}}>
+        <Fossil width={230} />
+      </div>
+      {meteor > 0 && meteor < 1 && (
+        <div style={{position: 'absolute', left: X_EXT - 30 + (1 - meteor) * 520, top: LANE_DINO + 70 - (1 - meteor) * 420}}>
+          <Meteor />
+        </div>
+      )}
+      <div
+        style={{
+          position: 'absolute',
+          left: X_EXT - 160,
+          top: LANE_DINO + 30,
+          width: 320,
+          height: 320,
+          borderRadius: '50%',
+          background: 'radial-gradient(rgba(255,214,102,.9), rgba(251,146,60,.4) 45%, rgba(251,146,60,0) 70%)',
+          opacity: flash,
+          transform: `scale(${0.4 + (1 - flash) * 0.9})`,
+        }}
+      />
+      <div style={{position: 'absolute', left: X_EXT + 24, top: LANE_DINO + 196, transform: `scale(${extinct})`, transformOrigin: 'left center'}}>
+        <Tag bg={C.red} size={32}>
+          ✕ Extintos
+        </Tag>
+      </div>
+
+      {/* Pista das tartarugas */}
+      <Track top={LANE_TURTLE} label="Tartarugas marinhas" color={C.green} tip={turtleTip} show={show} />
+      <div style={{position: 'absolute', left: X0 + 40, top: LANE_TURTLE + 110, opacity: 0.25 * Math.min(1, (turtleTip - X0 - 200) / 120)}}>
+        <Turtle width={150} flap={-0.4} mood="feliz" />
+      </div>
+      {turtleWalking &&
+        [0, 1, 2].map((i) => {
+          const k = (t * 2 + i / 3) % 1;
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: turtleTip - 230 - k * 120,
+                top: LANE_TURTLE + 186 - k * 20,
+                width: 26 - k * 14,
+                height: 26 - k * 14,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,.4)',
+                opacity: 1 - k,
+              }}
+            />
+          );
+        })}
+      <div style={{position: 'absolute', left: turtleTip - 220, top: LANE_TURTLE + 66 + step(turtleWalking, 8), opacity: show}}>
+        <Turtle width={210} flap={turtleWalking ? Math.sin(t * 8) : 0.3} mood={mood} look={mood === 'chocada' ? -0.8 : 0.4} />
+      </div>
+      <div style={{position: 'absolute', right: 1080 - X1, top: LANE_TURTLE + 256, transform: `scale(${stillHere})`, transformOrigin: 'right center'}}>
+        <Tag bg={C.greenDark} size={32}>
+          ✓ Ainda aqui
+        </Tag>
+      </div>
+
+      {/* Eixo do tempo */}
+      <div style={{opacity: show}}>
+        <div style={{position: 'absolute', top: 1070, left: X0, width: X1 - X0, height: 4, background: '#8aa0bf'}} />
+        {[
+          {x: X0, label: '110 mi anos atrás', align: 'left' as const, left: X0},
+          {x: X_EXT, label: '66 mi', align: 'center' as const, left: X_EXT - 150},
+          {x: X1, label: 'hoje', align: 'right' as const, left: X1 - 300},
+        ].map((m) => (
+          <div key={m.label}>
+            <div style={{position: 'absolute', left: m.x - 2, top: 1058, width: 4, height: 28, background: '#8aa0bf'}} />
+            <div style={{position: 'absolute', top: 1096, left: m.left, width: 300, textAlign: m.align, fontFamily: FONT_UI, fontWeight: 800, fontSize: 30, color: '#cfe3ff'}}>
+              {m.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{position: 'absolute', top: 1170, width: '100%', display: 'flex', justifyContent: 'center', gap: 22, transform: `scale(${items})`}}>
         {['Sacola', 'Canudo', 'Rede'].map((x) => (
-          <Tag key={x} bg={C.red} size={38}>
+          <Tag key={x} bg={C.red} size={34}>
             {x}
           </Tag>
         ))}
@@ -621,12 +739,17 @@ export const Solucao: React.FC<P> = ({s}) => {
 export const Fim: React.FC<P> = ({s}) => {
   const t = useSeconds();
   const q = usePop(at(s, 'que'));
-  const tx = interpolate(t, [0, 5], [120, 620]);
+  const tx = interpolate(t, [0, 5], [120, 420], clamp);
   const ty = 880 + Math.sin(t * 2) * 15;
   return (
     <SeaScene>
       <Trail x={tx + 40} y={ty + 140} />
-      <Turtle width={500} flap={Math.sin(t * 5)} style={{position: 'absolute', left: tx, top: ty}} />
+      <Turtle
+        width={500}
+        flap={Math.sin(t * 5)}
+        mood={moodAt(t, [[0, 'aliviada'], [at(s, 'acorda'), 'feliz'], [at(s, 'que'), 'confusa']])}
+        style={{position: 'absolute', left: tx, top: ty}}
+      />
       <div style={{position: 'absolute', top: 300, width: '100%', textAlign: 'center', transform: `scale(${q})`}}>
         <Tag bg={C.yellow} color={C.ink} size={48}>
           Comenta aqui ↓

@@ -6,12 +6,12 @@ import {C, FONT_TITLE, FONT_UI, Tag} from '../ui';
 // e o personagem anda na ponta dela. Mostra o momento em que as duas
 // barras já cresceram (dinossauro virou fóssil, tartaruga chegou a hoje).
 
-const X0 = 90; // 110 milhões de anos atrás
-const X1 = 990; // hoje
-const xOf = (ma: number) => X0 + ((110 - ma) / 110) * (X1 - X0);
-const X_EXT = xOf(66);
+export const X0 = 90; // 110 milhões de anos atrás
+export const X1 = 990; // hoje
+export const xOf = (ma: number) => X0 + ((110 - ma) / 110) * (X1 - X0);
+export const X_EXT = xOf(66);
 
-const Dino: React.FC<{width?: number}> = ({width = 210}) => (
+export const Dino: React.FC<{width?: number}> = ({width = 210}) => (
   <svg width={width} height={width * 0.73} viewBox="0 0 220 160">
     <path d="M62 88 Q24 92 0 124 Q34 112 72 106 Z" fill="#f59e0b" />
     <rect x="62" y="108" width="17" height="42" rx="7" fill="#d97706" />
@@ -30,7 +30,7 @@ const Dino: React.FC<{width?: number}> = ({width = 210}) => (
   </svg>
 );
 
-const Fossil: React.FC<{width?: number}> = ({width = 230}) => (
+export const Fossil: React.FC<{width?: number}> = ({width = 230}) => (
   <svg width={width} height={width * 0.5} viewBox="0 0 230 115">
     <ellipse cx="115" cy="104" rx="112" ry="11" fill="#2a3a5a" />
     <path d="M8 84 Q60 64 110 72 Q150 78 178 62" stroke="#cbd5e1" strokeWidth="7" fill="none" strokeLinecap="round" />
@@ -44,7 +44,7 @@ const Fossil: React.FC<{width?: number}> = ({width = 230}) => (
   </svg>
 );
 
-const Meteor: React.FC = () => (
+export const Meteor: React.FC = () => (
   <svg width="220" height="160" viewBox="0 0 220 160">
     <defs>
       <linearGradient id="trail" x1="1" y1="0" x2="0" y2="1">
