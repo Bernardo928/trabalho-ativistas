@@ -3,9 +3,11 @@ import words from './words.json';
 export type Word = {text: string; start: number; end: number};
 export const WORDS = words as Word[];
 export const FPS = 30;
-export const TAIL_SECONDS = 1.6;
+export const CREDITS_GAP = 1.4;
+export const CREDITS_SECONDS = 5.5;
 
-export const totalSeconds = () => WORDS[WORDS.length - 1].end + TAIL_SECONDS;
+export const creditsStart = () => WORDS[WORDS.length - 1].end + CREDITS_GAP;
+export const totalSeconds = () => creditsStart() + CREDITS_SECONDS;
 
 export type SceneId =
   | 'hook'
@@ -16,7 +18,8 @@ export type SceneId =
   | 'rede'
   | 'dinos'
   | 'solucao'
-  | 'fim';
+  | 'fim'
+  | 'creditos';
 
 // Each scene starts on the first spoken word that matches its anchor,
 // searching forward from the previous scene. Time on the badge is the
@@ -58,6 +61,7 @@ export const scenes: Scene[] = (() => {
     out.push({id: s.id, clock: s.clock, start: s.id === 'hook' ? 0 : WORDS[startIdx].start, end: 0});
     from = idx + 1;
   }
+  out.push({id: 'creditos', clock: null, start: creditsStart(), end: 0});
   for (let i = 0; i < out.length; i++) {
     out[i].end = i + 1 < out.length ? out[i + 1].start : totalSeconds();
   }

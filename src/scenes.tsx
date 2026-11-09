@@ -9,40 +9,134 @@ type P = {s: Scene};
 const at = (s: Scene, word: string) => wordTime(word, s.start) - s.start;
 const clamp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
 
+/* ---------- Mar ao pôr do sol (gancho e final) ---------- */
+const HORIZON = 700;
+
+// Repeating wave line that drifts sideways; `fill` paints everything below it.
+const WaveLine: React.FC<{
+  y: number;
+  amp: number;
+  len: number;
+  speed: number;
+  color: string;
+  width?: number;
+  fill?: boolean;
+}> = ({y, amp, len, speed, color, width = 5, fill = false}) => {
+  const t = useSeconds();
+  const off = (t * speed) % len;
+  let d = `M ${-2 * len} ${y}`;
+  for (let x = -2 * len; x < 1080 + 2 * len; x += len) {
+    d += ` q ${len / 4} ${-amp} ${len / 2} 0 q ${len / 4} ${amp} ${len / 2} 0`;
+  }
+  if (fill) d += ` V 1920 H ${-2 * len} Z`;
+  return (
+    <svg width="1080" height="1920" style={{position: 'absolute', top: 0, left: 0}}>
+      <path
+        d={d}
+        transform={`translate(${-off} 0)`}
+        fill={fill ? color : 'none'}
+        stroke={fill ? 'none' : color}
+        strokeWidth={width}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+};
+
+const SeaScene: React.FC<{children?: React.ReactNode; front?: React.ReactNode}> = ({children, front}) => {
+  const t = useSeconds();
+  return (
+    <Fill style={{background: 'linear-gradient(#ffd08a, #ff9a6e 45%, #d9708a)'}}>
+      <div style={{position: 'absolute', left: 540 - 200, top: HORIZON - 230, width: 400, height: 400, borderRadius: '50%', background: '#ffe7a3', boxShadow: '0 0 120px 40px rgba(255,231,163,.45)'}} />
+      <div style={{position: 'absolute', top: HORIZON, left: 0, right: 0, bottom: 0, background: 'linear-gradient(#45aede, #1a7fb6 22%, #0d5688 55%, #062f4f)'}} />
+      {/* Reflexo do sol na água */}
+      {new Array(9).fill(0).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            top: HORIZON + 14 + i * 30,
+            left: 540 - (190 - i * 16) / 2 + Math.sin(t * 2.4 + i * 1.7) * 18,
+            width: 190 - i * 16,
+            height: 9,
+            borderRadius: 6,
+            background: '#ffe7a3',
+            opacity: 0.85 - i * 0.07 + Math.sin(t * 5 + i) * 0.1,
+          }}
+        />
+      ))}
+      <WaveLine y={HORIZON + 50} amp={5} len={120} speed={30} color="rgba(255,255,255,.35)" width={3} />
+      <WaveLine y={HORIZON + 130} amp={9} len={190} speed={-40} color="rgba(255,255,255,.3)" width={4} />
+      <WaveLine y={HORIZON + 250} amp={14} len={280} speed={50} color="rgba(255,255,255,.28)" width={5} />
+      {children}
+      {/* Água na frente da personagem: deixa a tartaruga "dentro" do mar */}
+      <WaveLine y={HORIZON + 210} amp={18} len={320} speed={-35} color="rgba(6,60,100,.32)" fill />
+      <WaveLine y={HORIZON + 212} amp={18} len={320} speed={-35} color="rgba(255,255,255,.45)" width={6} />
+      <WaveLine y={HORIZON + 470} amp={24} len={420} speed={60} color="rgba(255,255,255,.22)" width={7} />
+      <WaveLine y={HORIZON + 760} amp={30} len={520} speed={-50} color="rgba(255,255,255,.18)" width={8} />
+      {front}
+    </Fill>
+  );
+};
+
+// Bubbles trailing behind a swimmer.
+const Trail: React.FC<{x: number; y: number}> = ({x, y}) => {
+  const t = useSeconds();
+  return (
+    <>
+      {new Array(7).fill(0).map((_, i) => {
+        const k = (t * 1.2 + i / 7) % 1;
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: x - k * 160 + Math.sin(i * 3) * 20,
+              top: y - k * 120,
+              width: 14 + (i % 3) * 8,
+              height: 14 + (i % 3) * 8,
+              borderRadius: '50%',
+              border: '3px solid rgba(255,255,255,.6)',
+              opacity: 1 - k,
+            }}
+          />
+        );
+      })}
+    </>
+  );
+};
+
 /* ---------- 1. Gancho ---------- */
 export const Hook: React.FC<P> = ({s}) => {
   const t = useSeconds();
   const pop = usePop(0.1);
   const stamp = usePop(at(s, 'impossivel'), 9);
+  const tx = 230 + Math.sin(t * 1.1) * 40;
+  const ty = 880 + Math.sin(t * 2) * 16;
   return (
-    <Fill style={{background: 'linear-gradient(#ffb66b, #ff7e6b 30%, #2a7fb8 46%, #0b3c63)'}}>
-      <div style={{position: 'absolute', left: 540 - 170, top: 520, width: 340, height: 340, borderRadius: '50%', background: '#ffe39a'}} />
-      <div style={{position: 'absolute', top: 870, left: 0, right: 0, bottom: 0, background: 'linear-gradient(#1f8ac2, #08385b)'}} />
-      <div style={{position: 'absolute', top: 250, width: '100%', textAlign: 'center', transform: `scale(${pop})`}}>
-        <Tag bg={C.ink} size={44}>
+    <SeaScene>
+      <Trail x={tx + 40} y={ty + 150} />
+      <Turtle width={560} flap={Math.sin(t * 5)} style={{position: 'absolute', left: tx, top: ty, transform: `rotate(${Math.sin(t * 2) * 3}deg)`}} />
+      <div style={{position: 'absolute', top: 230, width: '100%', textAlign: 'center', transform: `scale(${pop})`}}>
+        <Tag bg={C.ink} size={40}>
           1 dia · 24 horas
         </Tag>
       </div>
-      <Turtle
-        width={700}
-        flap={Math.sin(t * 5)}
-        style={{position: 'absolute', left: 190 + Math.sin(t * 1.3) * 30, top: 640 + Math.sin(t * 2) * 18}}
-      />
       <div
         style={{
           position: 'absolute',
-          top: 1450,
+          top: 340,
           width: '100%',
           textAlign: 'center',
           opacity: stamp,
-          transform: `scale(${1.6 - stamp * 0.6}) rotate(-4deg)`,
+          transform: `scale(${1.25 - stamp * 0.25}) rotate(-3deg)`,
         }}
       >
-        <Tag bg={C.red} size={56}>
+        <Tag bg={C.red} size={36}>
           Chance de sobreviver: quase zero
         </Tag>
       </div>
-    </Fill>
+    </SeaScene>
   );
 };
 
@@ -99,34 +193,130 @@ const NightBeach: React.FC<{lamps: number; children?: React.ReactNode}> = ({lamp
   );
 };
 
-const Hatchling: React.FC<{x: number; y: number; dir: number; t: number; i: number}> = ({x, y, dir, t, i}) => (
-  <div style={{position: 'absolute', left: x, top: y, transform: `scaleX(${dir}) rotate(${Math.sin(t * 14 + i) * 6}deg)`}}>
-    <Turtle width={110} flap={Math.sin(t * 14 + i)} />
-  </div>
-);
+// Filhote visto de cima, cabeça para cima. `phase` anima as nadadeiras.
+const HatchTop: React.FC<{phase: number}> = ({phase}) => {
+  const a = Math.sin(phase) * 28;
+  return (
+    <svg width="76" height="96" viewBox="0 0 76 96" style={{overflow: 'visible'}}>
+      <g transform={`rotate(${-35 - a} 22 36)`}>
+        <ellipse cx="8" cy="36" rx="17" ry="6.5" fill="#2e8a5c" />
+      </g>
+      <g transform={`rotate(${35 - a} 54 36)`}>
+        <ellipse cx="68" cy="36" rx="17" ry="6.5" fill="#2e8a5c" />
+      </g>
+      <g transform={`rotate(${25 + a * 0.6} 26 70)`}>
+        <ellipse cx="18" cy="76" rx="9" ry="5" fill="#2e8a5c" />
+      </g>
+      <g transform={`rotate(${-25 + a * 0.6} 50 70)`}>
+        <ellipse cx="58" cy="76" rx="9" ry="5" fill="#2e8a5c" />
+      </g>
+      <ellipse cx="38" cy="15" rx="10" ry="11" fill="#5cc28d" />
+      <circle cx="33" cy="11" r="2.4" fill="#10243a" />
+      <circle cx="43" cy="11" r="2.4" fill="#10243a" />
+      <ellipse cx="38" cy="52" rx="20" ry="26" fill="#2a7350" />
+      <ellipse cx="38" cy="52" rx="13" ry="18" fill="#3f9e6c" />
+      <path d="M38 34 V70 M27 44 L49 44 M27 60 L49 60" stroke="#2a7350" strokeWidth="2.5" />
+    </svg>
+  );
+};
 
-const NEST = {x: 520, y: 1120};
-const HATCH = 9;
+// Caminhada de cada filhote, calculada pelo tempo global da narração para
+// continuar igual entre a cena do ninho e a cena dos postes.
+const HATCH = 12;
+const WATERLINE = 905;
+const LAMP = {x: 130, y: 1000};
+const T_BORN = wordTime('nasce');
+const T_GO = wordTime('missao');
+const T_TURN = wordTime('muitos');
+
+type HatchState = {x: number; y: number; ang: number; opacity: number; phase: number; path: [number, number][]};
+
+const hatchAt = (i: number, T: number): HatchState => {
+  const r = (k: string) => random(`h${i}${k}`);
+  const x0 = 400 + r('x') * 270;
+  const y0 = 1100 + r('y') * 80;
+  const tx = x0 + (r('tx') - 0.5) * 300;
+  const L0 = Math.hypot(tx - x0, WATERLINE - y0);
+  const dx = (tx - x0) / L0;
+  const dy = (WATERLINE - y0) / L0;
+  const v = 22 + r('v') * 14;
+  const go = T_GO + r('g') * 0.9;
+  const lost = i % 4 !== 0;
+  const walked = (until: number) => v * Math.max(0, until - go);
+  const appear = Math.min(1, Math.max(0, (T - T_BORN - i * 0.16) / 0.45));
+  let x = x0 + dx * walked(T);
+  let y = y0 + dy * walked(T);
+  let ang = Math.atan2(dx, -dy);
+  let moving = T > go;
+  const path: [number, number][] = [[x0, y0]];
+  if (lost && T > T_TURN) {
+    const xt = x0 + dx * walked(T_TURN);
+    const yt = y0 + dy * walked(T_TURN);
+    const lx = LAMP.x + (r('lx') - 0.5) * 160;
+    const ly = LAMP.y + (r('ly') - 0.3) * 160;
+    const L = Math.hypot(lx - xt, ly - yt);
+    const d = Math.min(L, (60 + r('lv') * 30) * (T - T_TURN));
+    x = xt + ((lx - xt) / L) * d;
+    y = yt + ((ly - yt) / L) * d;
+    const target = Math.atan2((lx - xt) / L, -(ly - yt) / L);
+    const k = Math.min(1, (T - T_TURN) / 0.7);
+    ang = ang + (target - ang) * k;
+    moving = d < L;
+    path.push([xt, yt]);
+  }
+  path.push([x, y]);
+  // Quem chega na água some aos poucos nas ondas.
+  const sea = Math.min(1, Math.max(0, (y - WATERLINE) / 40));
+  return {x, y: y + (1 - appear) * 30, ang, opacity: appear * sea, phase: moving ? T * 13 + i * 1.3 : 0, path};
+};
+
+const Hatchlings: React.FC<{s: Scene}> = ({s}) => {
+  const t = useSeconds();
+  const T = s.start + t;
+  const all = new Array(HATCH).fill(0).map((_, i) => hatchAt(i, T));
+  return (
+    <>
+      <svg width="1080" height="1920" style={{position: 'absolute', top: 0, left: 0}}>
+        {all.map((h, i) => (
+          <polyline
+            key={i}
+            points={h.path.map(([px, py]) => `${px + 38},${py + 60}`).join(' ')}
+            fill="none"
+            stroke="rgba(150,105,45,.45)"
+            strokeWidth="10"
+            strokeDasharray="4 12"
+            strokeLinecap="round"
+            opacity={Math.min(1, h.opacity * 2)}
+          />
+        ))}
+      </svg>
+      {all.map((h, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: h.x,
+            top: h.y,
+            opacity: h.opacity,
+            transform: `rotate(${(h.ang * 180) / Math.PI + Math.sin(h.phase) * 6}deg)`,
+            transformOrigin: '38px 48px',
+            scale: '1.3',
+          }}
+        >
+          <HatchTop phase={h.phase} />
+        </div>
+      ))}
+    </>
+  );
+};
 
 export const Ninho: React.FC<P> = ({s}) => {
   const t = useSeconds();
-  const born = at(s, 'nasce');
-  const go = at(s, 'missao');
   const moon = fadeIn(t, at(s, 'lua'));
   return (
     <NightBeach lamps={0}>
-      <div style={{position: 'absolute', left: NEST.x - 140, top: NEST.y + 40, width: 360, height: 110, borderRadius: '50%', background: C.sandDark}} />
-      {new Array(HATCH).fill(0).map((_, i) => {
-        const appear = fadeIn(t, born + i * 0.2);
-        const walk = Math.max(0, t - go - i * 0.12);
-        const x = NEST.x - 120 + (i % 3) * 90 + walk * (i % 2 ? 14 : -10);
-        const y = NEST.y + 30 - Math.floor(i / 3) * 40 - appear * 60 - walk * 32;
-        return (
-          <div key={i} style={{opacity: appear}}>
-            <Hatchling x={x} y={Math.max(y, 860)} dir={1} t={t} i={i} />
-          </div>
-        );
-      })}
+      <div style={{position: 'absolute', left: 390, top: 1150, width: 340, height: 110, borderRadius: '50%', background: C.sandDark}} />
+      <Hatchlings s={s} />
       <div style={{position: 'absolute', top: 430, right: 60, opacity: moon, transform: `translateY(${(1 - moon) * 20}px)`}}>
         <Tag bg="#f4f1d0" color={C.ink} size={36}>
           Guia: luz da lua
@@ -139,19 +329,11 @@ export const Ninho: React.FC<P> = ({s}) => {
 export const Luzes: React.FC<P> = ({s}) => {
   const t = useSeconds();
   const lamps = fadeIn(t, at(s, 'luz'), 0.25);
-  const turn = at(s, 'muitos');
   const label = usePop(at(s, 'postes'));
   return (
     <NightBeach lamps={lamps}>
-      {new Array(HATCH).fill(0).map((_, i) => {
-        const lost = i % 3 !== 0;
-        const k = Math.max(0, t - turn);
-        const baseX = 340 + (i % 3) * 140;
-        const baseY = 1000 + Math.floor(i / 3) * 70;
-        const x = lost ? baseX - k * (70 + i * 8) : baseX + k * 10;
-        const y = lost ? baseY + k * 25 : baseY - k * 30;
-        return <Hatchling key={i} x={x} y={Math.min(Math.max(y, 860), 1180)} dir={lost && k > 0 ? -1 : 1} t={t} i={i} />;
-      })}
+      <div style={{position: 'absolute', left: 390, top: 1150, width: 340, height: 110, borderRadius: '50%', background: C.sandDark}} />
+      <Hatchlings s={s} />
       <div style={{position: 'absolute', top: 430, width: '100%', textAlign: 'center', transform: `scale(${label})`}}>
         <Tag bg={C.red} size={44}>
           ✕ Luz artificial confunde
@@ -212,13 +394,38 @@ const Jellyfish: React.FC<{t: number}> = ({t}) => (
   </svg>
 );
 
-const Bag: React.FC = () => (
-  <svg width="260" height="360" viewBox="0 0 130 180">
-    <path d="M20 40 Q20 20 40 22 L40 40 M110 40 Q110 20 90 22 L90 40" stroke="#eef6fb" strokeWidth="8" fill="none" />
-    <path d="M14 40 L116 40 L106 150 Q65 175 24 150 Z" fill="rgba(238,246,251,.85)" />
-    <path d="M30 60 L40 140 M65 55 L65 150 M100 60 L90 140" stroke="rgba(180,200,215,.8)" strokeWidth="3" />
-  </svg>
-);
+// Sacola de supermercado boiando: translúcida, com alças, dobras e borda ondulando.
+const Bag: React.FC<{t: number}> = ({t}) => {
+  const w = Math.sin(t * 2.2) * 6;
+  const v = Math.cos(t * 1.7) * 5;
+  return (
+    <svg width="300" height="400" viewBox="0 0 150 200" style={{overflow: 'visible'}}>
+      <defs>
+        <linearGradient id="bagFill" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.92" />
+          <stop offset="0.6" stopColor="#e3f1f8" stopOpacity="0.78" />
+          <stop offset="1" stopColor="#b9d9ea" stopOpacity="0.6" />
+        </linearGradient>
+      </defs>
+      <path d={`M32 56 C ${20 + v} 8, ${62 + v} 2, 58 54`} stroke="url(#bagFill)" strokeWidth="10" fill="none" strokeLinecap="round" />
+      <path d={`M92 54 C ${88 - v} 2, ${132 - v} 8, 118 56`} stroke="url(#bagFill)" strokeWidth="10" fill="none" strokeLinecap="round" />
+      <path
+        d={`M24 52 Q75 66 126 52 Q ${136 + w} 100 ${130 + w} 150
+            Q ${118} ${176 + w} 102 168 Q 90 ${190 - w} 76 176
+            Q 60 ${192 + w} 48 172 Q 28 ${182 - w} ${20 - w} 150 Q ${12 - w} 100 24 52 Z`}
+        fill="url(#bagFill)"
+        stroke="#a9cbe0"
+        strokeWidth="2.5"
+      />
+      <path d={`M46 66 Q ${40 + w} 112 50 164`} stroke="#a9cbe0" strokeWidth="3" fill="none" opacity="0.8" />
+      <path d={`M77 70 Q ${85 - w} 118 76 172`} stroke="#a9cbe0" strokeWidth="3" fill="none" opacity="0.8" />
+      <path d={`M106 66 Q ${100 + w} 110 110 160`} stroke="#a9cbe0" strokeWidth="3" fill="none" opacity="0.8" />
+      <path d="M34 74 Q 28 106 36 138" stroke="#ffffff" strokeWidth="6" fill="none" strokeLinecap="round" opacity="0.9" />
+      <rect x="56" y="98" width="42" height="26" rx="6" fill="none" stroke="#e05a5a" strokeWidth="4" opacity="0.5" />
+      <path d="M62 111 H92" stroke="#e05a5a" strokeWidth="4" opacity="0.5" />
+    </svg>
+  );
+};
 
 export const Plastico: React.FC<P> = ({s}) => {
   const t = useSeconds();
@@ -232,8 +439,8 @@ export const Plastico: React.FC<P> = ({s}) => {
         <div style={{position: 'absolute', opacity: 1 - reveal}}>
           <Jellyfish t={t} />
         </div>
-        <div style={{position: 'absolute', opacity: reveal}}>
-          <Bag />
+        <div style={{position: 'absolute', opacity: reveal, transform: `scale(${0.9 + reveal * 0.1}) rotate(${Math.sin(t * 1.5) * 4}deg)`}}>
+          <Bag t={t} />
         </div>
       </div>
       <Turtle
@@ -414,16 +621,67 @@ export const Solucao: React.FC<P> = ({s}) => {
 export const Fim: React.FC<P> = ({s}) => {
   const t = useSeconds();
   const q = usePop(at(s, 'que'));
+  const tx = interpolate(t, [0, 5], [120, 620]);
+  const ty = 880 + Math.sin(t * 2) * 15;
   return (
-    <Fill style={{background: 'linear-gradient(#ffd59a, #ff9f7a 32%, #2a86bf 46%, #0b3c63)'}}>
-      <div style={{position: 'absolute', left: 540 - 220, top: 560, width: 440, height: 440, borderRadius: '50%', background: '#ffe9a8'}} />
-      <div style={{position: 'absolute', top: 880, left: 0, right: 0, bottom: 0, background: 'linear-gradient(#1f8ac2, #08385b)'}} />
-      <Turtle width={520} flap={Math.sin(t * 5)} style={{position: 'absolute', left: interpolate(t, [0, 5], [200, 760]), top: 900 + Math.sin(t * 2) * 15}} />
+    <SeaScene>
+      <Trail x={tx + 40} y={ty + 140} />
+      <Turtle width={500} flap={Math.sin(t * 5)} style={{position: 'absolute', left: tx, top: ty}} />
       <div style={{position: 'absolute', top: 300, width: '100%', textAlign: 'center', transform: `scale(${q})`}}>
         <Tag bg={C.yellow} color={C.ink} size={48}>
           Comenta aqui ↓
         </Tag>
       </div>
-    </Fill>
+    </SeaScene>
+  );
+};
+
+/* ---------- 10. Créditos ---------- */
+const NOMES = ['Bernardo Gomes', 'Gustavo', 'Bernardo Santana', 'Davi', 'Vinícius'];
+
+export const Creditos: React.FC<P> = () => {
+  const t = useSeconds();
+  const title = usePop(0.15);
+  return (
+    <Underwater tint="#0b4f7d">
+      <div style={{position: 'absolute', top: 300, width: '100%', textAlign: 'center', transform: `scale(${title})`}}>
+        <div style={{fontFamily: FONT_TITLE, fontSize: 130, color: C.yellow, letterSpacing: 4, WebkitTextStroke: '12px #0d1b2a', paintOrder: 'stroke fill'}}>
+          CRÉDITOS
+        </div>
+        <div style={{fontFamily: FONT_UI, fontWeight: 600, fontSize: 40, color: '#d7ecfa', marginTop: 6}}>Trabalho em grupo</div>
+      </div>
+      <div style={{position: 'absolute', top: 600, width: '100%', textAlign: 'center'}}>
+        {NOMES.map((n, i) => {
+          const p = fadeIn(t, 0.5 + i * 0.3, 0.4);
+          return (
+            <div
+              key={n}
+              style={{
+                fontFamily: FONT_UI,
+                fontWeight: 800,
+                fontSize: 68,
+                color: C.white,
+                lineHeight: 1.6,
+                opacity: p,
+                transform: `translateY(${(1 - p) * 30}px)`,
+                textShadow: '0 6px 0 rgba(0,0,0,.3)',
+              }}
+            >
+              {n}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{position: 'absolute', top: 1260, width: '100%', textAlign: 'center', opacity: fadeIn(t, 2.2), fontFamily: FONT_UI, fontWeight: 600, fontSize: 34, color: '#d7ecfa', lineHeight: 1.5}}>
+        Narração: ElevenLabs (voz Gabriel)
+        <br />
+        Dados: Projeto Tamar
+      </div>
+      <Turtle
+        width={260}
+        flap={Math.sin(t * 6)}
+        style={{position: 'absolute', top: 1420 + Math.sin(t * 2) * 10, left: interpolate(t, [0, 6], [-280, 1100])}}
+      />
+    </Underwater>
   );
 };

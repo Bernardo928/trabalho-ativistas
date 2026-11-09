@@ -1,6 +1,6 @@
 # Se você passasse um dia como uma tartaruga
 
-Vídeo vertical (1080x1920, 75 s) para o trabalho de ciências sobre meio ambiente.
+Vídeo vertical (1080x1920, 80 s, com créditos no final) para o trabalho de ciências sobre meio ambiente.
 
 - **Vídeo pronto:** `entrega/dia-de-tartaruga.mp4`
 - **Legendas separadas:** `entrega/dia-de-tartaruga.srt`

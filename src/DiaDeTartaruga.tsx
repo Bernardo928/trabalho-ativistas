@@ -1,6 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Sequence, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
-import {Dinos, Fim, Hook, Luzes, Mar, Ninho, Plastico, Rede, Solucao} from './scenes';
+import {Creditos, Dinos, Fim, Hook, Luzes, Mar, Ninho, Plastico, Rede, Solucao} from './scenes';
 import {FPS, Scene, SceneId, chunks, scenes} from './timeline';
 import {C, FONT_TITLE, FONT_UI} from './ui';
 
@@ -14,6 +14,7 @@ const SCENE_COMPONENTS: Record<SceneId, React.FC<{s: Scene}>> = {
   dinos: Dinos,
   solucao: Solucao,
   fim: Fim,
+  creditos: Creditos,
 };
 
 const sceneAt = (t: number) => scenes.find((s) => t >= s.start && t < s.end) ?? scenes[scenes.length - 1];
@@ -55,6 +56,9 @@ const ClockBadge: React.FC = () => {
   );
 };
 
+// Shrink long chunks so they fit in two lines at most.
+const fitSize = (text: string) => (text.length <= 16 ? 112 : text.length <= 22 ? 98 : 86);
+
 // Karaoke captions: 1-3 words at a time, current word in yellow.
 const Captions: React.FC = () => {
   const frame = useCurrentFrame();
@@ -73,7 +77,7 @@ const Captions: React.FC = () => {
         right: 60,
         textAlign: 'center',
         fontFamily: FONT_TITLE,
-        fontSize: 112,
+        fontSize: fitSize(c.words.map((w) => w.text).join(' ')),
         lineHeight: 1.08,
         textTransform: 'uppercase',
         transform: `scale(${0.9 + pop * 0.1}) translateY(${(1 - pop) * 20}px)`,
@@ -82,18 +86,19 @@ const Captions: React.FC = () => {
       {c.words.map((w, i) => {
         const active = t >= w.start;
         return (
+          <React.Fragment key={i}>
+          {i > 0 ? ' ' : null}
           <span
-            key={i}
             style={{
               color: active && t < w.end + 0.15 ? C.yellow : C.white,
               WebkitTextStroke: '16px #0d1b2a',
               paintOrder: 'stroke fill',
               textShadow: '0 8px 0 rgba(0,0,0,.35)',
-              marginRight: 26,
             }}
           >
             {w.text}
           </span>
+          </React.Fragment>
         );
       })}
     </div>
