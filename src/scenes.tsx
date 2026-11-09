@@ -1,5 +1,5 @@
 import React from 'react';
-import {interpolate, random} from 'remotion';
+import {OffthreadVideo, interpolate, random, staticFile} from 'remotion';
 import {Scene, wordTime} from './timeline';
 import {Turtle, moodAt} from './Turtle';
 import {Dino, Fossil, Meteor, X0, X1, X_EXT} from './mockups/LinhaDoTempo';
@@ -765,15 +765,16 @@ const NOMES = ['Bernardo Gomes', 'Gustavo', 'Bernardo Santana', 'Davi', 'Viníci
 export const Creditos: React.FC<P> = () => {
   const t = useSeconds();
   const title = usePop(0.15);
+  const rato = usePop(0.3, 10);
   return (
     <Underwater tint="#0b4f7d">
-      <div style={{position: 'absolute', top: 300, width: '100%', textAlign: 'center', transform: `scale(${title})`}}>
+      <div style={{position: 'absolute', top: 230, width: '100%', textAlign: 'center', transform: `scale(${title})`}}>
         <div style={{fontFamily: FONT_TITLE, fontSize: 130, color: C.yellow, letterSpacing: 4, WebkitTextStroke: '12px #0d1b2a', paintOrder: 'stroke fill'}}>
           CRÉDITOS
         </div>
         <div style={{fontFamily: FONT_UI, fontWeight: 600, fontSize: 40, color: '#d7ecfa', marginTop: 6}}>Trabalho em grupo</div>
       </div>
-      <div style={{position: 'absolute', top: 600, width: '100%', textAlign: 'center'}}>
+      <div style={{position: 'absolute', top: 500, width: '100%', textAlign: 'center'}}>
         {NOMES.map((n, i) => {
           const p = fadeIn(t, 0.5 + i * 0.3, 0.4);
           return (
@@ -782,9 +783,9 @@ export const Creditos: React.FC<P> = () => {
               style={{
                 fontFamily: FONT_UI,
                 fontWeight: 800,
-                fontSize: 68,
+                fontSize: 62,
                 color: C.white,
-                lineHeight: 1.6,
+                lineHeight: 1.45,
                 opacity: p,
                 transform: `translateY(${(1 - p) * 30}px)`,
                 textShadow: '0 6px 0 rgba(0,0,0,.3)',
@@ -795,15 +796,30 @@ export const Creditos: React.FC<P> = () => {
           );
         })}
       </div>
-      <div style={{position: 'absolute', top: 1260, width: '100%', textAlign: 'center', opacity: fadeIn(t, 2.2), fontFamily: FONT_UI, fontWeight: 600, fontSize: 34, color: '#d7ecfa', lineHeight: 1.5}}>
+      <div style={{position: 'absolute', top: 980, width: '100%', textAlign: 'center', opacity: fadeIn(t, 2.2), fontFamily: FONT_UI, fontWeight: 600, fontSize: 32, color: '#d7ecfa', lineHeight: 1.5}}>
         Narração: ElevenLabs (voz Gabriel)
         <br />
         Dados: Projeto Tamar
       </div>
+      {/* Ratinho dançando: vídeo de tela verde já recortado (public/ratinho.webm, com transparência) */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 540 - 270,
+          top: 1110,
+          width: 540,
+          height: 661,
+          opacity: rato,
+          transform: `scale(${0.6 + rato * 0.4})`,
+          transformOrigin: '50% 100%',
+        }}
+      >
+        <OffthreadVideo src={staticFile('ratinho.webm')} transparent muted style={{width: 540, height: 661}} />
+      </div>
       <Turtle
-        width={260}
+        width={220}
         flap={Math.sin(t * 6)}
-        style={{position: 'absolute', top: 1420 + Math.sin(t * 2) * 10, left: interpolate(t, [0, 6], [-280, 1100])}}
+        style={{position: 'absolute', top: 1690 + Math.sin(t * 2) * 10, left: interpolate(t, [0, 8], [-260, 1100])}}
       />
     </Underwater>
   );
