@@ -1,0 +1,34 @@
+name: Publicar vídeo em release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Nome da versão (tag)"
+        required: true
+        default: "v1.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preparar arquivos
+        run: |
+          mkdir -p release
+          cp entrega/dia-de-tartaruga.mp4 release/trabalho-agora-vai.mp4
+          cp entrega/dia-de-tartaruga.srt release/trabalho-agora-vai.srt
+
+      - name: Criar release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.tag }}" \
+            release/trabalho-agora-vai.mp4 \
+            release/trabalho-agora-vai.srt \
+            --title "Se você passasse um dia como uma tartaruga" \
+            --notes "Vídeo final do trabalho (1080x1920, 83 s). Baixe o arquivo trabalho-agora-vai.mp4 em Assets. A legenda separada está em trabalho-agora-vai.srt."
