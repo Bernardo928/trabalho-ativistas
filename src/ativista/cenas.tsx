@@ -480,18 +480,44 @@ export const Denuncia: React.FC<Props> = ({c}) => {
 };
 
 /* ---------- 6. Perigo (18:00) ---------- */
-const Seringueira: React.FC = () => (
-  <svg width="150" height="190" viewBox="0 0 150 190">
-    <rect x="58" y="40" width="34" height="150" rx="10" fill="#7c5a3a" />
-    {[70, 92, 114].map((y) => (
-      <path key={y} d={`M60 ${y} L90 ${y + 12}`} stroke="#f5f5f4" strokeWidth="4" />
+// Retrato desenhado do Chico Mendes, no estilo chapado do vídeo.
+const Retrato: React.FC = () => (
+  <svg width="170" height="170" viewBox="0 0 170 170">
+    <defs>
+      <clipPath id="moldura">
+        <circle cx="85" cy="85" r="80" />
+      </clipPath>
+    </defs>
+    <circle cx="85" cy="85" r="84" fill="#2f9e5b" />
+    <g clipPath="url(#moldura)">
+      <circle cx="85" cy="85" r="80" fill="#cfe9d6" />
+      <circle cx="30" cy="40" r="34" fill="#9fd3ad" />
+      <circle cx="140" cy="36" r="30" fill="#9fd3ad" />
+      <path d="M20 170 Q24 128 85 124 Q146 128 150 170 Z" fill="#e8e2d0" />
+      <path d="M70 126 L85 146 L100 126" fill="none" stroke="#b8ae96" strokeWidth="4" />
+      <rect x="72" y="104" width="26" height="26" rx="8" fill="#a8714a" />
+      <ellipse cx="85" cy="78" rx="34" ry="40" fill="#c08356" />
+      <ellipse cx="51" cy="82" rx="7" ry="10" fill="#a8714a" />
+      <ellipse cx="119" cy="82" rx="7" ry="10" fill="#a8714a" />
+      <path d="M50 74 Q46 34 86 32 Q126 32 121 72 Q116 52 98 50 Q86 58 70 50 Q54 54 50 74 Z" fill="#231915" />
+      <path d="M52 62 Q60 40 84 38" stroke="#3a2a22" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M62 66 q10 -5 18 0" stroke="#231915" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <path d="M90 66 q10 -5 18 0" stroke="#231915" strokeWidth="5" fill="none" strokeLinecap="round" />
+      <circle cx="71" cy="76" r="4.5" fill="#1d2433" />
+      <circle cx="99" cy="76" r="4.5" fill="#1d2433" />
+      <path d="M85 80 q-4 10 0 14 q4 0 5 -2" stroke="#8f5a37" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M62 100 Q72 90 85 96 Q98 90 108 100 Q100 108 85 102 Q70 108 62 100 Z" fill="#231915" />
+      <path d="M74 108 q11 5 22 0" stroke="#7a4a2e" strokeWidth="3" fill="none" strokeLinecap="round" />
+    </g>
+  </svg>
+);
+
+const Flor: React.FC = () => (
+  <svg width="56" height="56" viewBox="0 0 56 56">
+    {[0, 72, 144, 216, 288].map((a) => (
+      <ellipse key={a} cx="28" cy="14" rx="9" ry="13" fill="#f9a8d4" stroke="#db2777" strokeWidth="2" transform={`rotate(${a} 28 28)`} />
     ))}
-    <path d="M90 128 q 10 6 10 14" stroke="#f5f5f4" strokeWidth="4" fill="none" />
-    <path d="M92 142 L116 142 L112 162 L96 162 Z" fill="#a8a29e" />
-    <ellipse cx="104" cy="143" rx="12" ry="3" fill="#fafaf9" />
-    <circle cx="75" cy="36" r="40" fill="#2e7d3b" />
-    <circle cx="44" cy="52" r="24" fill="#2e7d3b" />
-    <circle cx="106" cy="52" r="24" fill="#2e7d3b" />
+    <circle cx="28" cy="28" r="8" fill="#ffd23f" />
   </svg>
 );
 
@@ -500,7 +526,7 @@ export const Perigo: React.FC<Props> = ({c}) => {
   const lado = usePop(em(c, 'lado'), 9);
   const card = usePop(em(c, 'chico'));
   const tAssassinado = em(c, 'assassinado');
-  const cinza = lerp(t, [tAssassinado, tAssassinado + 0.8], [0, 1]);
+  const flor = usePop(tAssassinado + 0.2, 10);
   const amazonia = usePop(em(c, 'amazonia'), 10);
   return (
     <Fill style={{background: 'linear-gradient(#3a2950, #a5486a 45%, #f08a4b 70%)'}}>
@@ -529,14 +555,18 @@ export const Perigo: React.FC<Props> = ({c}) => {
           boxShadow: '0 12px 0 rgba(0,0,0,.25)',
           opacity: card,
           transform: `translateY(${(1 - card) * -40}px)`,
-          filter: `grayscale(${cinza * 0.85})`,
         }}
       >
-        <Seringueira />
+        <Retrato />
         <div>
           <div style={{fontFamily: FONT_TITLE, fontSize: 64, color: C.ink, lineHeight: 1}}>CHICO MENDES</div>
           <div style={{fontFamily: FONT_UI, fontWeight: 800, fontSize: 28, color: '#4b5563', marginTop: 8}}>Seringueiro · Acre</div>
-          <div style={{fontFamily: FONT_UI, fontWeight: 800, fontSize: 34, color: C.ink, marginTop: 6}}>1944 – 1988</div>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 6}}>
+            <span style={{fontFamily: FONT_UI, fontWeight: 800, fontSize: 34, color: C.ink}}>1944 – 1988</span>
+            <span style={{display: 'inline-block', transform: `scale(${flor}) rotate(${flor * 40}deg)`}}>
+              <Flor />
+            </span>
+          </div>
         </div>
       </div>
       <div style={{position: 'absolute', top: 680, width: '100%', textAlign: 'center', transform: `scale(${amazonia})`}}>
