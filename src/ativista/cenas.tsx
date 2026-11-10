@@ -78,7 +78,11 @@ export const Abertura: React.FC<Props> = ({c}) => {
           1 dia · 24 horas
         </Tag>
       </div>
-      <div style={{position: 'absolute', left: 0, right: 0, top: 860, height: 400, background: '#7bc47f', borderRadius: '50% 50% 0 0 / 30% 30% 0 0'}} />
+      <div style={{position: 'absolute', left: -120, right: -120, top: 860, bottom: 0, background: '#7bc47f', borderRadius: '50% 50% 0 0 / 12% 12% 0 0'}} />
+      <div style={{position: 'absolute', left: 0, right: 0, top: 1240, bottom: 0, background: 'linear-gradient(#6ab46e, #4f9a55)'}} />
+      {[[120, 1180], [930, 1150], [250, 1560], [820, 1620], [540, 1780]].map(([x, y], i) => (
+        <div key={i} style={{position: 'absolute', left: x, top: y, width: 70, height: 26, borderRadius: '50%', background: '#5aa85e'}} />
+      ))}
       <Ativista
         width={290}
         humor={humorEm(t, [
